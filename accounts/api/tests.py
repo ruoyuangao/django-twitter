@@ -1,6 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User
+from testing.testcases import TestCase
 
 LOGIN_URL = '/api/accounts/login/'
 LOGOUT_URL = '/api/accounts/logout/'
@@ -12,7 +13,7 @@ class AccountApiTests(TestCase):
     def setUp(self):
         # this function will be executed whenever we run the test function
         self.client = APIClient()
-        self.user = self.createUser(
+        self.user = self.create_user(
             username='admin',
             email='admin@jiuzhang.com',
             password='correct password',
