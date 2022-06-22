@@ -20,6 +20,7 @@ class CommentViewSet(viewsets.GenericViewSet):
     """
     serializer_class = CommentSerializerForCreate
     queryset = Comment.objects.all()
+    filterset_fields = ('tweet_id',)
 
     def get_permissions(self):
         # use AllowAny() / IsAuthenticated() to realize the object
@@ -77,3 +78,22 @@ class CommentViewSet(viewsets.GenericViewSet):
         # DRF will return status code = 204 no content as default
         # here we return success=True to make frontend to make the decision
         return Response({'success': True}, status=status.HTTP_200_OK)
+
+
+    # get comment list
+    def list(self, request, *args, **kwargs):
+        if 'tweet_id' not in request.query_params:
+            return Response(
+                {
+                    'message': 'missing tweet_id in request',
+                    'success': False,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        queryset = self.get_queryset()
+        comments = self.filter_queryset(queryset).order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+        return Response(
+            {'comments': serializer.data},
+            status=status.HTTP_200_OK,
+        )
