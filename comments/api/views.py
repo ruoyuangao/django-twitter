@@ -9,6 +9,7 @@ from comments.api.serializers import (
 )
 from comments.models import Comment
 from comments.api.permissions import IsObjectOwner
+from inbox.services import NotificationService
 from utils.decorators import required_params
 
 
@@ -48,6 +49,7 @@ class CommentViewSet(viewsets.GenericViewSet):
 
         # save method will user create method in serializer
         comment = serializer.save()
+        NotificationService.send_comment_notification(comment)
         return Response(
             CommentSerializer(comment, context={'request': request}).data,
             status=status.HTTP_201_CREATED,
