@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -148,6 +148,29 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# set what storage we will use to store user upload files
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+TESTING = ((" ".join(sys.argv)).find('manage.py test') != -1)
+if TESTING:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# When we use s3boto3 as the upload storage for users,
+# we have to set the BUCKET_NAME and REGION_NAME as we do on AWS
+AWS_STORAGE_BUCKET_NAME = 'django-twitter'
+AWS_S3_REGION_NAME = 'us-west-1'
+
+# We also need to set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# in local_settings.py
+# AWS_ACCESS_KEY_ID = ''
+# AWS_SECREAT_ACCESS_KEY = ''
+
+# When we set FileSystemStorage as DEFAULT_FILESTORAGE
+# the files will be uploaded to MEDIA_ROOT
+# the difference between media and static
+# - static usually store css, js these static codes, which user can visit directly
+# - media store the data files, not code
+MEDIA_ROOT = 'media/'
 
 try:
     from .local_settings import *
