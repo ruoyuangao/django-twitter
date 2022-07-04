@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 from likes.models import Like
+from tweets.constants import TweetPhotoStatus, TWEET_PHOTO_STATUS_CHOICES
 from utils.time_helpers import utc_now
 
 class Tweet(models.Model) :
@@ -35,3 +36,21 @@ class Tweet(models.Model) :
             content_type=ContentType.objects.get_for_model(Tweet),
             object_id=self.id,
         ).order_by('-created_at')
+
+class TweetPhoto(models.Model) :
+    # which tweet include this photo
+    tweet = models.ForeignKey(Tweet, on_delete=models.SET_NULL, null=True)
+
+    # which user upload this photo
+    # although we can get this information using tweet, it will be more convenient
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+    # photo file
+    file = models.FileField()
+    order = models.IntegerField(default=0)
+
+    # photo status
+    status = models.IntegerField(
+        deault=TweetPhotoStatus.PENDING,
+        choices=TWEET_PHOTO_STATUS_CHOICES,
+    )
