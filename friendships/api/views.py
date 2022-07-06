@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
+
+from friendships.api.paginations import FriendshipPagination
 from friendships.api.serializers import (
     FollowerSerializer,
     FollowingSerializer,
@@ -20,26 +22,26 @@ class FriendshipViewSet(viewsets.GenericViewSet):
 
     queryset = User.objects.all()
 
+    # different views need different pagination, we need to define it
+    pagination_class = FriendshipPagination
+
     # get fans' information
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followers(self, request, pk):
         friendships = Friendship.objects.filter(to_user_id=pk).order_by('-created_at')
-        serializer = FollowerSerializer(friendships, many=True)
-        return Response(
-            {'followers': serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(friendships)
+        serializer = FollowerSerializer(page, friendships, many=True)
+        return self.get_paginated_response(serializer.data)
 
     # get followee information
     # AllowAny: any user can visit this list
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followings(self, request, pk):
         friendships = Friendship.objects.filter(from_user_id=pk).order_by('-created_at')
-        serializer = FollowingSerializer(friendships, many=True)
-        return Response(
-            {'followings': serializer.data},
-            status=status.HTTP_200_OK,
-        )
+        page = self.paginate_queryset(friendships)
+        serializer = FollowingSerializer(page, friendships, many=True)
+        return self.get_paginated_response(serializer.data)
+
 
     # create friendships
     # only authenticated user can create this
