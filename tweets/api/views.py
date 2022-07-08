@@ -2,6 +2,8 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+import tweets
 from tweets.api.serializers import (
     TweetSerializerForCreate,
     TweetSerializer,
@@ -9,6 +11,7 @@ from tweets.api.serializers import (
 )
 from tweets.models import Tweet
 from newsfeeds.services import NewsFeedService
+from tweets.services import TweetService
 from utils.decorators import required_params
 from utils.paginations import EndlessPagination
 
@@ -36,19 +39,19 @@ class TweetViewSet(viewsets.GenericViewSet,
 
     @required_params(params=['user_id'])
     def list(self, request, *args, **kwargs):
-        """
-        overwrite list function, must with the specific user_id
-        """
-        # use decorator to realize the below function
-        # if 'user_id' not in request.query_params:
-        #     return Response('missing user_id', status=400)
-
-        tweets = Tweet.objects.filter(
-            user_id=request.query_params['user_id']
-        ).order_by('-created_at')
-        tweets = self.paginate_queryset(tweets)
+        user_id = request.query_params['user_id']
+        cached_tweets = TweetService.get_cached_tweets(user_id)
+        page = self.paginator.paginate_cached_list(cached_tweets, request)
+        if page is None:
+            # select * from twitter_tweets
+            # where user_id = xxx
+            # order by created_at desc
+            # this SQL search will use the index of user and created_at
+            # only user index is not enough
+            queryset = Tweet.objects.filter(user_id=user_id).order_by('-created_at')
+            page = self.paginate_queryset(queryset)
         serializer = TweetSerializer(
-            tweets,
+            page,
             context={'request': request},
             many=True,
         )
