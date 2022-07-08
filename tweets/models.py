@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 
 from likes.models import Like
 from tweets.constants import TweetPhotoStatus, TWEET_PHOTO_STATUS_CHOICES
+from tweets.listeners import push_tweet_to_cache
 from utils.listeners import invalidate_object_cache
 from utils.memcached_helper import MemcachedHelper
 from utils.time_helpers import utc_now
@@ -63,9 +64,9 @@ class TweetPhoto(models.Model) :
         choices=TWEET_PHOTO_STATUS_CHOICES,
     )
 
-    # 软删除(soft delete)标记，当一个照片被删除的时候，首先会被标记为已经被删除，在一定时间之后
-    # 才会被真正的删除。这样做的目的是，如果在 tweet 被删除的时候马上执行真删除的通常会花费一定的
-    # 时间，影响效率。可以用异步任务在后台慢慢做真删除。
+    # soft delete: when a photo is deleted, it will first mark as delete
+    # it takes some time to do the real delete action
+    # This can help increase the efficiency of delete
     has_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -83,3 +84,4 @@ class TweetPhoto(models.Model) :
 
 
 post_save.connect(invalidate_object_cache, sender=Tweet)
+post_save.connect(push_tweet_to_cache, sender=Tweet)
