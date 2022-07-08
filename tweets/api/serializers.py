@@ -94,4 +94,5 @@ class TweetSerializerForDetail(TweetSerializer):
             'likes_count',
             'comments_count',
             'has_liked',
+            'photo_urls',
         )
