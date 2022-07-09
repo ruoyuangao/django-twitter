@@ -1,7 +1,6 @@
 from django.core import serializers
 from utils.json_encoder import JSONEncoder
 
-
 class DjangoModelSerializer:
 
     @classmethod
